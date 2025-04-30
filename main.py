@@ -5,8 +5,8 @@ import math
 from data import Facing
 
 # 기본 설정
-WIDTH = 1920
-HEIGHT = 1080
+WIDTH = 640
+HEIGHT = 480
 TILE_SIZE = 40
 FPS = 60
 
@@ -37,9 +37,11 @@ class Player(pygame.sprite.Sprite):
         self.max_velocity_x = 6
         self.gravity_const = 0.5
         self.jump_power = -12
+        self.push_skill_power = -3
         self.acceleration = 0.5
         self.friction = 0.5
         self.is_jumping = False
+        self.is_pushing = False
         self.on_ground = False
 
     def update(self, keys):
@@ -52,6 +54,21 @@ class Player(pygame.sprite.Sprite):
             self.velocity_x += self.acceleration
             if not self.facing_right:
                 self.facing_right = True
+        # TODO : use self.is_pushing to block infinity skill
+        elif keys[pygame.K_c]:
+            if not self.is_pushing and self.facing_clamp == Facing.NORTH:
+                self.is_pushing = True
+                self.velocity_y -= self.push_skill_power
+            elif not self.is_pushing and self.facing_clamp == Facing.SOUTH:
+                self.is_pushing = True
+                self.velocity_y += self.push_skill_power
+            elif not self.is_pushing and self.facing_clamp == Facing.EAST:
+                self.is_pushing = True
+                self.velocity_x += self.push_skill_power
+            elif not self.is_pushing and self.facing_clamp == Facing.WEST:
+                self.is_pushing = True
+                self.velocity_x -= self.push_skill_power
+            self.is_pushing = False
         else:
             self.apply_friction()
 
