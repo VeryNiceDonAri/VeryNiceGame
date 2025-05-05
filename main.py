@@ -2,14 +2,14 @@ import os
 import pygame
 import math
 from data import Facing
-
+from map_editor.core import load_platforms
 from value_plotter import plot_value
 
 # 기본 설정
 WIDTH = 640
 HEIGHT = 480
-TILE_SIZE = 40
 FPS = 60
+TILE_SIZE = 40
 
 # 파이게임 초기화
 pygame.init()
@@ -17,18 +17,16 @@ screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Platformer Game")
 clock = pygame.time.Clock()
 
-# 폰트 초기화 (FPS 표시용)
+# 폰트 초기화
 font = pygame.font.SysFont(None, 24)
 
 # Platform 클래스
 class Platform(pygame.sprite.Sprite):
-    def __init__(self, x, y, width, height):
+    def __init__(self, x, y, width, height, color=(0,255,0)):
         super().__init__()
         self.image = pygame.Surface((width, height))
-        self.image.fill((0, 255, 0))  # 초록색으로 설정
-        self.rect = self.image.get_rect()
-        self.rect.x = x
-        self.rect.y = y
+        self.image.fill(color)
+        self.rect = self.image.get_rect(topleft=(x,y))
 
 # Player 클래스
 class Player(pygame.sprite.Sprite):
@@ -175,39 +173,31 @@ class Player(pygame.sprite.Sprite):
         self.is_jumping = True
         self.on_ground = False
 
-# 메인 코드
-player = Player()
-platform1 = Platform(145, HEIGHT - 144, 200, 20)  # 플랫폼 추가
-all_sprites = pygame.sprite.Group()
+# 맵 데이터 로드
 platforms = pygame.sprite.Group()
+loaded = load_platforms("./map_editor/tester.json")
+for p in loaded:
+    platforms.add(Platform(p.x, p.y, p.width, p.height, p.color))
 
-# 그룹에 객체 추가
+# 스프라이트 그룹
+all_sprites = pygame.sprite.Group()
+player = Player()
 all_sprites.add(player)
-all_sprites.add(platform1)
-platforms.add(platform1)
+all_sprites.add(*platforms)
 
-#plot_value(lambda: HEIGHT - player.rect.y, interval=1/FPS)
-
+# 메인 루프
 running = True
-mousePos = (0, 0)
 while running:
     clock.tick(FPS)
-
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
-
     keys = pygame.key.get_pressed()
     player.update(keys)
-
     screen.fill((0, 0, 0))
     all_sprites.draw(screen)
-
-    # FPS 표시
-    fps = clock.get_fps()
-    fps_text = font.render(f"FPS: {fps:.1f}", True, (255, 255, 255))  # 흰색 텍스트
-    screen.blit(fps_text, (10, 10))  # 좌상단에 표시
-
-    pygame.display.update()
+    fps_text = font.render(f"FPS: {clock.get_fps():.1f}", True, (255,255,255))
+    screen.blit(fps_text, (10,10))
+    pygame.display.flip()
 
 pygame.quit()
